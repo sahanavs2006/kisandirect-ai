@@ -14,16 +14,210 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audits: {
+        Row: {
+          created_at: string
+          crop: string
+          id: string
+          listing_ids: string[]
+          mart_id: string
+          ranking: Json
+          recommendation: string | null
+        }
+        Insert: {
+          created_at?: string
+          crop: string
+          id?: string
+          listing_ids: string[]
+          mart_id: string
+          ranking: Json
+          recommendation?: string | null
+        }
+        Update: {
+          created_at?: string
+          crop?: string
+          id?: string
+          listing_ids?: string[]
+          mart_id?: string
+          ranking?: Json
+          recommendation?: string | null
+        }
+        Relationships: []
+      }
+      listings: {
+        Row: {
+          ai_quality_grade: string | null
+          ai_quality_report: Json | null
+          ai_quality_score: number | null
+          asking_price_per_kg: number
+          buyer_id: string | null
+          created_at: string
+          crop: string
+          farmer_id: string
+          harvest_date: string | null
+          id: string
+          image_urls: string[]
+          quantity_kg: number
+          region: string | null
+          sold_at: string | null
+          sold_price_per_kg: number | null
+          status: string
+          variety: string | null
+        }
+        Insert: {
+          ai_quality_grade?: string | null
+          ai_quality_report?: Json | null
+          ai_quality_score?: number | null
+          asking_price_per_kg: number
+          buyer_id?: string | null
+          created_at?: string
+          crop: string
+          farmer_id: string
+          harvest_date?: string | null
+          id?: string
+          image_urls?: string[]
+          quantity_kg: number
+          region?: string | null
+          sold_at?: string | null
+          sold_price_per_kg?: number | null
+          status?: string
+          variety?: string | null
+        }
+        Update: {
+          ai_quality_grade?: string | null
+          ai_quality_report?: Json | null
+          ai_quality_score?: number | null
+          asking_price_per_kg?: number
+          buyer_id?: string | null
+          created_at?: string
+          crop?: string
+          farmer_id?: string
+          harvest_date?: string | null
+          id?: string
+          image_urls?: string[]
+          quantity_kg?: number
+          region?: string | null
+          sold_at?: string | null
+          sold_price_per_kg?: number | null
+          status?: string
+          variety?: string | null
+        }
+        Relationships: []
+      }
+      predictions: {
+        Row: {
+          created_at: string
+          crop: string
+          current_price_per_kg: number | null
+          forecast: Json
+          id: string
+          region: string
+          user_id: string
+          weather: string | null
+        }
+        Insert: {
+          created_at?: string
+          crop: string
+          current_price_per_kg?: number | null
+          forecast: Json
+          id?: string
+          region: string
+          user_id: string
+          weather?: string | null
+        }
+        Update: {
+          created_at?: string
+          crop?: string
+          current_price_per_kg?: number | null
+          forecast?: Json
+          id?: string
+          region?: string
+          user_id?: string
+          weather?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          region: string | null
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          region?: string | null
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          region?: string | null
+        }
+        Relationships: []
+      }
+      scans: {
+        Row: {
+          created_at: string
+          diagnosis: Json
+          farmer_id: string
+          id: string
+          image_url: string
+        }
+        Insert: {
+          created_at?: string
+          diagnosis: Json
+          farmer_id: string
+          id?: string
+          image_url: string
+        }
+        Update: {
+          created_at?: string
+          diagnosis?: Json
+          farmer_id?: string
+          id?: string
+          image_url?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "farmer" | "mart" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +344,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["farmer", "mart", "admin"],
+    },
   },
 } as const
