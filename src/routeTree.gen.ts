@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MartRouteImport } from './routes/mart'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as FarmerRouteImport } from './routes/farmer'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
+const MartRoute = MartRouteImport.update({
+  id: '/mart',
+  path: '/mart',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketplaceRoute = MarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/farmer': typeof FarmerRoute
   '/marketplace': typeof MarketplaceRoute
+  '/mart': typeof MartRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/farmer': typeof FarmerRoute
   '/marketplace': typeof MarketplaceRoute
+  '/mart': typeof MartRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/farmer': typeof FarmerRoute
   '/marketplace': typeof MarketplaceRoute
+  '/mart': typeof MartRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/farmer' | '/marketplace'
+  fullPaths: '/' | '/auth' | '/farmer' | '/marketplace' | '/mart'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/farmer' | '/marketplace'
-  id: '__root__' | '/' | '/auth' | '/farmer' | '/marketplace'
+  to: '/' | '/auth' | '/farmer' | '/marketplace' | '/mart'
+  id: '__root__' | '/' | '/auth' | '/farmer' | '/marketplace' | '/mart'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +76,18 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   FarmerRoute: typeof FarmerRoute
   MarketplaceRoute: typeof MarketplaceRoute
+  MartRoute: typeof MartRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mart': {
+      id: '/mart'
+      path: '/mart'
+      fullPath: '/mart'
+      preLoaderRoute: typeof MartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace': {
       id: '/marketplace'
       path: '/marketplace'
@@ -107,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   FarmerRoute: FarmerRoute,
   MarketplaceRoute: MarketplaceRoute,
+  MartRoute: MartRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
