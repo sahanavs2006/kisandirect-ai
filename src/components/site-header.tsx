@@ -1,14 +1,15 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Sprout, LogOut, Sparkles } from "lucide-react";
+import { LogOut, Sparkles, RotateCcw } from "lucide-react";
 import { useDemoMode } from "@/lib/demo";
 import { toast } from "sonner";
+import logoUrl from "@/assets/krishimithra-logo.png";
 
 export function SiteHeader() {
   const { user, role, signOut } = useAuth();
   const navigate = useNavigate();
-  const { demo, toggle } = useDemoMode();
+  const { demo, toggle, reset } = useDemoMode();
 
   const onToggleDemo = () => {
     toggle();
@@ -19,15 +20,21 @@ export function SiteHeader() {
     );
   };
 
+  const onResetDemo = () => {
+    reset();
+    toast.success("Demo cleared. Restored to live login flow.");
+    navigate({ to: "/" });
+  };
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[image:var(--gradient-hero)] text-primary-foreground shadow-[var(--shadow-elegant)] group-hover:scale-105 transition-transform">
-            <Sprout className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/5 ring-1 ring-primary/15 group-hover:scale-105 transition-transform">
+            <img src={logoUrl} alt="KrishiMithra logo" className="h-7 w-7 object-contain" />
           </div>
           <span className="font-bold text-lg tracking-tight">
-            Kisan<span className="text-primary">Direct</span>
+            Krishi<span className="text-primary">Mithra</span>
             <span className="ml-1 text-[10px] font-semibold uppercase tracking-widest text-accent-foreground bg-accent/30 rounded px-1.5 py-0.5 align-middle">AI</span>
           </span>
         </Link>
@@ -53,6 +60,17 @@ export function SiteHeader() {
             <Sparkles className="h-3.5 w-3.5 mr-1" />
             {demo ? "Demo: ON" : "Try demo"}
           </Button>
+          {demo && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onResetDemo}
+              title="Clear demo data and return to the live login flow"
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1" />
+              Reset demo
+            </Button>
+          )}
           {user ? (
             <>
               <span className="hidden sm:inline text-xs text-muted-foreground">
