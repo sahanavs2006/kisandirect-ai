@@ -183,7 +183,7 @@ function Marketplace() {
   );
 }
 
-export function ListingCard({ l, farmer, onBuy, canBuy }: { l: Listing; farmer: string; onBuy?: () => void; canBuy?: boolean }) {
+export function ListingCard({ l, farmer, onAdd, canAdd }: { l: Listing; farmer: string; onAdd?: () => void; canAdd?: boolean }) {
   const total = l.quantity_kg * l.asking_price_per_kg;
   return (
     <Card className="overflow-hidden hover:shadow-[var(--shadow-elegant)] transition-all border-border/60">
@@ -218,9 +218,10 @@ export function ListingCard({ l, farmer, onBuy, canBuy }: { l: Listing; farmer: 
             <div className="flex items-center text-2xl font-bold text-primary"><IndianRupee className="h-5 w-5" />{l.asking_price_per_kg}<span className="text-sm font-normal text-muted-foreground ml-1">/kg</span></div>
             <div className="text-xs text-muted-foreground">Total ₹{total.toLocaleString("en-IN")}</div>
           </div>
-          {onBuy && (
-            <Button size="sm" disabled={!canBuy} onClick={onBuy} className="bg-[image:var(--gradient-hero)] hover:opacity-90">
-              {canBuy ? "Buy now" : "Mart only"}
+          {onAdd && (
+            <Button size="sm" disabled={!canAdd} onClick={onAdd} className="bg-[image:var(--gradient-hero)] hover:opacity-90">
+              <ShoppingCart className="h-4 w-4 mr-1" />
+              {canAdd ? "Add to cart" : "Mart only"}
             </Button>
           )}
         </div>
