@@ -122,7 +122,7 @@ function PricePredictorTab() {
             <Textarea rows={2} value={weather} onChange={(e) => setWeather(e.target.value)} />
           </div>
           <Button onClick={run} disabled={loading} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
-            {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />AI is reasoning...</> : <><Sparkles className="h-4 w-4 mr-2" />Forecast prices</>}
+            {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />AI is reasoning...</> : <><TrendingUp className="h-4 w-4 mr-2" />Forecast prices</>}
           </Button>
         </div>
       </Card>
@@ -230,7 +230,6 @@ function PriceCell({ label, value, compare }: { label: string; value: number; co
 /* ─────────── CREATE LISTING ─────────── */
 function CreateListingTab() {
   const { user } = useAuth();
-  const { demo } = useDemoMode();
   const [crop, setCrop] = useState("Tomato");
   const [variety, setVariety] = useState("");
   const [qty, setQty] = useState(100);
@@ -240,10 +239,6 @@ function CreateListingTab() {
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {
-    if (demo) {
-      toast.success("Demo: listing would be published. Sign up to go live.");
-      return;
-    }
     if (!user) return;
     if (files.length === 0) { toast.error("Add at least 1 photo"); return; }
     setSubmitting(true);
@@ -312,31 +307,14 @@ function CreateListingTab() {
 /* ─────────── DISEASE SCAN ─────────── */
 function DiseaseScanTab() {
   const { user } = useAuth();
-  const { demo } = useDemoMode();
   const [file, setFile] = useState<File | null>(null);
   const [cropHint, setCropHint] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(demo ? DEMO_DIAGNOSIS : null);
+  const [result, setResult] = useState<any>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const loadSample = () => {
-    setFile(null);
-    setPreviewUrl(sampleLeafUrl);
-    setCropHint("Tomato");
-    setResult(null);
-    toast.success("Sample tomato leaf loaded — click Diagnose to see the AI verdict.");
-  };
-
   const run = async () => {
-    if (demo) {
-      setLoading(true);
-      setResult(null);
-      await new Promise((r) => setTimeout(r, 700));
-      setResult(DEMO_DIAGNOSIS);
-      setLoading(false);
-      return;
-    }
     if (!file || !user) { toast.error("Upload a photo first"); return; }
     setLoading(true);
     setResult(null);
@@ -370,17 +348,11 @@ function DiseaseScanTab() {
           <div className="space-y-2">
             <Label>Photo</Label>
             <Input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0] ?? null; setFile(f); setPreviewUrl(f ? URL.createObjectURL(f) : null); }} />
-            {demo && (
-              <Button type="button" variant="outline" size="sm" onClick={loadSample} className="w-full">
-                <ImagePlus className="h-4 w-4 mr-2" /> Load sample crop image
-              </Button>
-            )}
           </div>
           {previewUrl && <div className="aspect-video rounded-lg overflow-hidden border border-border/60"><img src={previewUrl} alt="Crop preview" className="h-full w-full object-cover" /></div>}
-          <Button onClick={run} disabled={loading || (!file && !previewUrl && !demo)} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
+          <Button onClick={run} disabled={loading || !file} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
             {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Diagnosing...</> : <><ScanLine className="h-4 w-4 mr-2" />Diagnose with AI</>}
           </Button>
-          {demo && !file && !previewUrl && <p className="text-xs text-muted-foreground">Demo mode: load a sample image or click diagnose to see a sample result.</p>}
           <div className="pt-2 border-t border-border/60">
             <Link to="/scans" className="inline-flex items-center text-xs text-primary hover:underline font-semibold">
               <History className="h-3.5 w-3.5 mr-1" /> View full scan history
@@ -434,16 +406,10 @@ function DiagnosisCard({ r }: { r: any }) {
 /* ─────────── HISTORY ─────────── */
 function HistoryTab() {
   const { user } = useAuth();
-  const { demo } = useDemoMode();
   const [listings, setListings] = useState<any[]>([]);
   const [scans, setScans] = useState<any[]>([]);
 
   useEffect(() => {
-    if (demo) {
-      setListings(DEMO_FARMER_LISTINGS);
-      setScans(DEMO_SCANS);
-      return;
-    }
     if (!user) return;
     (async () => {
       const { data: l } = await supabase.from("listings").select("*").eq("farmer_id", user.id).order("created_at", { ascending: false });
@@ -451,7 +417,7 @@ function HistoryTab() {
       const { data: s } = await supabase.from("scans").select("*").eq("farmer_id", user.id).order("created_at", { ascending: false }).limit(10);
       setScans(s ?? []);
     })();
-  }, [user, demo]);
+  }, [user]);
 
   return (
     <div className="grid lg:grid-cols-2 gap-6">
