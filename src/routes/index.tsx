@@ -38,7 +38,7 @@ function Index() {
               <span className="bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">powered by AI.</span>
             </h1>
             <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl">
-              KisanDirect AI predicts crop prices, audits produce quality with computer vision, and connects Indian farmers <strong>directly</strong> to retail giants like D-Mart and Vishal Mega Mart — eliminating the middleman.
+              KrishiMithra predicts crop prices, audits produce quality with computer vision, and connects Indian farmers <strong>directly</strong> to retail giants like D-Mart and Vishal Mega Mart — eliminating the middleman.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/auth" search={{ mode: "signup" }}>
@@ -151,7 +151,7 @@ function Index() {
         <div className="mt-8">
           <Link to="/auth" search={{ mode: "signup" }}>
             <Button size="lg" className="bg-[image:var(--gradient-hero)] hover:opacity-90 shadow-[var(--shadow-elegant)]">
-              Join KisanDirect AI
+              Join KrishiMithra
             </Button>
           </Link>
         </div>
