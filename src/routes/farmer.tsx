@@ -10,9 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { TrendingUp, TrendingDown, Minus, Upload, Sparkles, Leaf, IndianRupee, ArrowUp, ArrowDown, AlertTriangle, ScanLine, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Upload, Sparkles, Leaf, IndianRupee, ArrowUp, ArrowDown, AlertTriangle, ScanLine, Loader2, ImagePlus, History } from "lucide-react";
 import { predictPrice, scanDisease } from "@/server/ai.functions";
 import { useDemoMode, DEMO_FORECAST, DEMO_DIAGNOSIS, DEMO_FARMER_LISTINGS, DEMO_SCANS } from "@/lib/demo";
+import { Link } from "@tanstack/react-router";
+import sampleLeafUrl from "@/assets/sample-diseased-leaf.jpg";
 
 export const Route = createFileRoute("/farmer")({
   component: FarmerDashboard,
@@ -327,6 +329,15 @@ function DiseaseScanTab() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(demo ? DEMO_DIAGNOSIS : null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const loadSample = () => {
+    setFile(null);
+    setPreviewUrl(sampleLeafUrl);
+    setCropHint("Tomato");
+    setResult(null);
+    toast.success("Sample tomato leaf loaded — click Diagnose to see the AI verdict.");
+  };
 
   const run = async () => {
     if (demo) {
@@ -367,12 +378,25 @@ function DiseaseScanTab() {
         <p className="text-sm text-muted-foreground mb-5">Photograph a sick leaf. AI returns the disease, severity, and remedies.</p>
         <div className="space-y-4">
           <div className="space-y-2"><Label>Crop hint (optional)</Label><Input value={cropHint} onChange={(e) => setCropHint(e.target.value)} placeholder="e.g. Potato, Tomato" /></div>
-          <div className="space-y-2"><Label>Photo</Label><Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
-          {file && <div className="aspect-video rounded-lg overflow-hidden border border-border/60"><img src={URL.createObjectURL(file)} alt="" className="h-full w-full object-cover" /></div>}
-          <Button onClick={run} disabled={loading || (!file && !demo)} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
+          <div className="space-y-2">
+            <Label>Photo</Label>
+            <Input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0] ?? null; setFile(f); setPreviewUrl(f ? URL.createObjectURL(f) : null); }} />
+            {demo && (
+              <Button type="button" variant="outline" size="sm" onClick={loadSample} className="w-full">
+                <ImagePlus className="h-4 w-4 mr-2" /> Load sample crop image
+              </Button>
+            )}
+          </div>
+          {previewUrl && <div className="aspect-video rounded-lg overflow-hidden border border-border/60"><img src={previewUrl} alt="Crop preview" className="h-full w-full object-cover" /></div>}
+          <Button onClick={run} disabled={loading || (!file && !previewUrl && !demo)} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
             {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Diagnosing...</> : <><ScanLine className="h-4 w-4 mr-2" />Diagnose with AI</>}
           </Button>
-          {demo && !file && <p className="text-xs text-muted-foreground">Demo mode: click diagnose to see a sample result.</p>}
+          {demo && !file && !previewUrl && <p className="text-xs text-muted-foreground">Demo mode: load a sample image or click diagnose to see a sample result.</p>}
+          <div className="pt-2 border-t border-border/60">
+            <Link to="/scans" className="inline-flex items-center text-xs text-primary hover:underline font-semibold">
+              <History className="h-3.5 w-3.5 mr-1" /> View full scan history
+            </Link>
+          </div>
         </div>
       </Card>
 
