@@ -1,13 +1,24 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { TrendingUp, ScanLine, Store, Sparkles, ShieldCheck, Leaf } from "lucide-react";
+import { useDemoMode } from "@/lib/demo";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
+  const { demo, enable } = useDemoMode();
+  const navigate = useNavigate();
+  const startDemo = () => {
+    if (!demo) {
+      enable();
+      toast.success("Demo mode ON — sample crops, scans & forecasts loaded.");
+    }
+    navigate({ to: "/marketplace" });
+  };
   return (
     <div>
       {/* HERO */}
@@ -35,10 +46,12 @@ function Index() {
                   Get started free
                 </Button>
               </Link>
+              <Button size="lg" variant="outline" onClick={startDemo}>
+                <Sparkles className="h-4 w-4 mr-1.5" />
+                Try the live demo
+              </Button>
               <Link to="/marketplace">
-                <Button size="lg" variant="outline">
-                  Browse marketplace
-                </Button>
+                <Button size="lg" variant="ghost">Browse marketplace</Button>
               </Link>
             </div>
 
