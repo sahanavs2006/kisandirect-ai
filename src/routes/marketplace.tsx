@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Search, MapPin, Package, IndianRupee, Sparkles, Filter, X } from "lucide-react";
-import { useDemoMode, DEMO_LISTINGS, DEMO_FARMERS } from "@/lib/demo";
+import { Search, MapPin, Package, IndianRupee, Sparkles, Filter, X, ShoppingCart } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -44,7 +43,6 @@ type Listing = {
 
 function Marketplace() {
   const { user, role } = useAuth();
-  const { demo } = useDemoMode();
   const [listings, setListings] = useState<Listing[]>([]);
   const [farmers, setFarmers] = useState<Record<string, string>>({});
   const [q, setQ] = useState("");
@@ -55,12 +53,6 @@ function Marketplace() {
 
   const load = async () => {
     setLoading(true);
-    if (demo) {
-      setListings(DEMO_LISTINGS as Listing[]);
-      setFarmers(DEMO_FARMERS);
-      setLoading(false);
-      return;
-    }
     const { data, error } = await supabase
       .from("listings")
       .select("*")
@@ -78,23 +70,16 @@ function Marketplace() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [demo]);
+  useEffect(() => { load(); }, []);
 
-  const buy = async (id: string) => {
-    if (demo) {
-      toast.success("Demo purchase confirmed!");
-      setListings((ls) => ls.filter((l) => l.id !== id));
-      return;
-    }
-    if (!user) { toast.error("Sign in as a Mart to buy"); return; }
-    if (role !== "mart") { toast.error("Only Mart accounts can purchase"); return; }
+  const addToCart = async (id: string) => {
+    if (!user) { toast.error("Sign in as a Mart to add to cart"); return; }
+    if (role !== "mart") { toast.error("Only Mart accounts can add to cart"); return; }
     const { error } = await supabase
-      .from("listings")
-      .update({ status: "sold", buyer_id: user.id, sold_at: new Date().toISOString() })
-      .eq("id", id)
-      .eq("status", "available");
+      .from("cart_items")
+      .upsert({ user_id: user.id, listing_id: id, quantity_kg: 1 }, { onConflict: "user_id,listing_id" });
     if (error) toast.error(error.message);
-    else { toast.success("Purchase confirmed!"); load(); }
+    else toast.success("Added to cart");
   };
 
   const cropOptions = Array.from(new Set(listings.map((l) => l.crop))).sort();
@@ -131,7 +116,6 @@ function Marketplace() {
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Marketplace</h1>
           <p className="text-muted-foreground mt-1">
             AI-verified farm produce, ready to ship.
-            {demo && <span className="ml-2 inline-flex items-center gap-1 text-xs font-semibold text-primary"><Sparkles className="h-3 w-3" />Showing demo data</span>}
           </p>
         </div>
         <div className="relative w-full md:w-80">
@@ -191,7 +175,7 @@ function Marketplace() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((l) => (
-            <ListingCard key={l.id} l={l} farmer={farmers[l.farmer_id] ?? "Farmer"} onBuy={() => buy(l.id)} canBuy={demo || role === "mart"} />
+            <ListingCard key={l.id} l={l} farmer={farmers[l.farmer_id] ?? "Farmer"} onAdd={() => addToCart(l.id)} canAdd={role === "mart"} />
           ))}
         </div>
       )}
