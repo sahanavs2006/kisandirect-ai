@@ -15,9 +15,14 @@ export function setDemoEnabled(on: boolean) {
 }
 
 export function useDemoMode() {
+  // Always start as `false` on the client's first render so it matches the
+  // SSR output and avoids React hydration mismatches. The real value is read
+  // from localStorage in an effect (after hydration) and then kept in sync.
   const [demo, setDemo] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     setDemo(isDemoEnabled());
+    setHydrated(true);
     const onChange = () => setDemo(isDemoEnabled());
     window.addEventListener("kisandirect:demo-changed", onChange);
     window.addEventListener("storage", onChange);
@@ -28,11 +33,14 @@ export function useDemoMode() {
   }, []);
   return {
     demo,
+    hydrated,
     enable: () => setDemoEnabled(true),
     disable: () => setDemoEnabled(false),
+    reset: () => setDemoEnabled(false),
     toggle: () => setDemoEnabled(!isDemoEnabled()),
   };
 }
+
 
 /* ──────────────────── SAMPLE DATA ──────────────────── */
 

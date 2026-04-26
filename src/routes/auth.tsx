@@ -1,15 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { z } from "zod";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Sprout, Store, Tractor } from "lucide-react";
+import { Store, Tractor, Mail, Lock, Eye, EyeOff, User as UserIcon, MapPin } from "lucide-react";
+import logoUrl from "@/assets/krishimithra-logo.png";
+import grassUrl from "@/assets/grass-bg.jpg";
 
 const searchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional().default("signin"),
@@ -33,26 +33,51 @@ function AuthPage() {
   }, [user, role, navigate]);
 
   return (
-    <div className="container mx-auto px-4 py-12 md:py-20">
-      <div className="max-w-md mx-auto">
-        <div className="text-center mb-6">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[image:var(--gradient-hero)] text-primary-foreground shadow-[var(--shadow-elegant)] mb-4">
-            <Sprout className="h-6 w-6" />
-          </div>
-          <h1 className="text-2xl font-bold">Welcome to KisanDirect AI</h1>
-          <p className="text-sm text-muted-foreground mt-1">Predict, inspect, connect.</p>
+    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
+      {/* Top white curved section with logo */}
+      <div className="relative bg-background pt-10 pb-20 px-4">
+        <div className="max-w-md mx-auto flex flex-col items-center">
+          <img src={logoUrl} alt="KrishiMithra logo" className="h-24 w-auto object-contain" />
         </div>
+        {/* Curved bottom edge */}
+        <svg
+          className="absolute -bottom-1 left-0 w-full"
+          viewBox="0 0 1440 80"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M0,0 C480,100 960,100 1440,0 L1440,80 L0,80 Z"
+            fill="var(--background)"
+            transform="scale(1,-1) translate(0,-80)"
+          />
+        </svg>
+      </div>
 
-        <Card className="p-6 shadow-[var(--shadow-card)]">
+      {/* Grass background bottom section */}
+      <div
+        className="relative px-4 pt-10 pb-16 min-h-[60vh]"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, oklch(0.32 0.12 145 / 0.55), oklch(0.22 0.10 145 / 0.75)), url(${grassUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-6">
+            <div className="text-accent text-sm font-medium">Welcome to</div>
+            <h1 className="text-3xl font-bold text-white tracking-tight">KrishiMithra</h1>
+          </div>
+
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-            <TabsList className="grid grid-cols-2 w-full mb-4">
-              <TabsTrigger value="signin">Sign in</TabsTrigger>
-              <TabsTrigger value="signup">Create account</TabsTrigger>
+            <TabsList className="grid grid-cols-2 w-full mb-5 bg-white/15 backdrop-blur border border-white/20">
+              <TabsTrigger value="signin" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white">Sign in</TabsTrigger>
+              <TabsTrigger value="signup" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white">Create account</TabsTrigger>
             </TabsList>
             <TabsContent value="signin"><SignInForm /></TabsContent>
             <TabsContent value="signup"><SignUpForm /></TabsContent>
           </Tabs>
-        </Card>
+        </div>
       </div>
     </div>
   );
@@ -61,6 +86,7 @@ function AuthPage() {
 function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handle = async (e: React.FormEvent) => {
@@ -74,24 +100,56 @@ function SignInForm() {
 
   return (
     <form onSubmit={handle} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="si-email">Email</Label>
-        <Input id="si-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+      <PillField icon={<Mail className="h-4 w-4" />}>
+        <Input
+          id="si-email"
+          type="email"
+          required
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 h-12"
+        />
+      </PillField>
+      <PillField icon={<Lock className="h-4 w-4" />} trailing={
+        <button type="button" onClick={() => setShowPw((v) => !v)} aria-label="Toggle password visibility" className="text-muted-foreground hover:text-foreground">
+          {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      }>
+        <Input
+          id="si-pw"
+          type={showPw ? "text" : "password"}
+          required
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 h-12"
+        />
+      </PillField>
+      <div className="px-1 text-sm text-white">
+        Forgot <span className="text-accent font-semibold">password?</span>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="si-pw">Password</Label>
-        <Input id="si-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-      </div>
-      <Button type="submit" disabled={loading} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
-        {loading ? "Signing in..." : "Sign in"}
+      <Button type="submit" disabled={loading} className="w-full h-12 rounded-full bg-white text-primary hover:bg-white/90 font-semibold text-base shadow-md">
+        {loading ? "Signing in..." : "Login"}
       </Button>
     </form>
+  );
+}
+
+function PillField({ icon, children, trailing }: { icon: React.ReactNode; children: React.ReactNode; trailing?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 bg-white rounded-full px-4 h-12 shadow-sm">
+      <span className="text-muted-foreground">{icon}</span>
+      <div className="flex-1 min-w-0">{children}</div>
+      {trailing}
+    </div>
   );
 }
 
 function SignUpForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [fullName, setFullName] = useState("");
   const [region, setRegion] = useState("");
   const [role, setRole] = useState<"farmer" | "mart">("farmer");
@@ -115,38 +173,38 @@ function SignUpForm() {
   };
 
   return (
-    <form onSubmit={handle} className="space-y-4">
+    <form onSubmit={handle} className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <button type="button" onClick={() => setRole("farmer")}
-          className={`rounded-lg border-2 p-3 text-left transition-all ${role === "farmer" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-          <Tractor className="h-5 w-5 text-primary mb-1" />
+          className={`rounded-2xl border-2 p-3 text-left transition-all ${role === "farmer" ? "border-accent bg-white text-foreground" : "border-white/30 bg-white/10 text-white hover:bg-white/20"}`}>
+          <Tractor className={`h-5 w-5 mb-1 ${role === "farmer" ? "text-primary" : "text-white"}`} />
           <div className="font-semibold text-sm">I'm a Farmer</div>
-          <div className="text-xs text-muted-foreground">Sell directly to marts</div>
+          <div className={`text-xs ${role === "farmer" ? "text-muted-foreground" : "text-white/80"}`}>Sell directly to marts</div>
         </button>
         <button type="button" onClick={() => setRole("mart")}
-          className={`rounded-lg border-2 p-3 text-left transition-all ${role === "mart" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-          <Store className="h-5 w-5 text-primary mb-1" />
+          className={`rounded-2xl border-2 p-3 text-left transition-all ${role === "mart" ? "border-accent bg-white text-foreground" : "border-white/30 bg-white/10 text-white hover:bg-white/20"}`}>
+          <Store className={`h-5 w-5 mb-1 ${role === "mart" ? "text-primary" : "text-white"}`} />
           <div className="font-semibold text-sm">I'm a Mart</div>
-          <div className="text-xs text-muted-foreground">Buy verified produce</div>
+          <div className={`text-xs ${role === "mart" ? "text-muted-foreground" : "text-white/80"}`}>Buy verified produce</div>
         </button>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="su-name">Full name</Label>
-        <Input id="su-name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="su-region">Region / City</Label>
-        <Input id="su-region" placeholder="e.g. Nashik, Maharashtra" required value={region} onChange={(e) => setRegion(e.target.value)} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="su-email">Email</Label>
-        <Input id="su-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="su-pw">Password</Label>
-        <Input id="su-pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
-      </div>
-      <Button type="submit" disabled={loading} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
+      <PillField icon={<UserIcon className="h-4 w-4" />}>
+        <Input id="su-name" required placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} className="border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 h-12" />
+      </PillField>
+      <PillField icon={<MapPin className="h-4 w-4" />}>
+        <Input id="su-region" placeholder="Region / City (e.g. Nashik, Maharashtra)" required value={region} onChange={(e) => setRegion(e.target.value)} className="border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 h-12" />
+      </PillField>
+      <PillField icon={<Mail className="h-4 w-4" />}>
+        <Input id="su-email" type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 h-12" />
+      </PillField>
+      <PillField icon={<Lock className="h-4 w-4" />} trailing={
+        <button type="button" onClick={() => setShowPw((v) => !v)} className="text-muted-foreground hover:text-foreground">
+          {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      }>
+        <Input id="su-pw" type={showPw ? "text" : "password"} required minLength={6} placeholder="Password (min 6 chars)" value={password} onChange={(e) => setPassword(e.target.value)} className="border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 h-12" />
+      </PillField>
+      <Button type="submit" disabled={loading} className="w-full h-12 rounded-full bg-white text-primary hover:bg-white/90 font-semibold text-base shadow-md mt-2">
         {loading ? "Creating account..." : "Create account"}
       </Button>
     </form>

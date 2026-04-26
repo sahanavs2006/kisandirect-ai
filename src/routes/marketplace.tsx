@@ -7,8 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Search, MapPin, Package, IndianRupee, Sparkles } from "lucide-react";
+import { Search, MapPin, Package, IndianRupee, Sparkles, Filter, X } from "lucide-react";
 import { useDemoMode, DEMO_LISTINGS, DEMO_FARMERS } from "@/lib/demo";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
@@ -42,6 +49,9 @@ function Marketplace() {
   const [farmers, setFarmers] = useState<Record<string, string>>({});
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+  const [cropFilter, setCropFilter] = useState<string>("all");
+  const [regionFilter, setRegionFilter] = useState<string>("all");
+  const [priceBand, setPriceBand] = useState<string>("all");
 
   const load = async () => {
     setLoading(true);
@@ -87,11 +97,32 @@ function Marketplace() {
     else { toast.success("Purchase confirmed!"); load(); }
   };
 
+  const cropOptions = Array.from(new Set(listings.map((l) => l.crop))).sort();
+  const regionOptions = Array.from(
+    new Set(listings.map((l) => (l.region ?? "").trim()).filter(Boolean))
+  ).sort();
+
+  const inBand = (price: number) => {
+    switch (priceBand) {
+      case "under20": return price < 20;
+      case "20to50": return price >= 20 && price <= 50;
+      case "50to100": return price > 50 && price <= 100;
+      case "over100": return price > 100;
+      default: return true;
+    }
+  };
+
   const filtered = listings.filter((l) => {
     const s = q.trim().toLowerCase();
-    if (!s) return true;
-    return l.crop.toLowerCase().includes(s) || (l.region ?? "").toLowerCase().includes(s);
+    if (s && !(l.crop.toLowerCase().includes(s) || (l.region ?? "").toLowerCase().includes(s))) return false;
+    if (cropFilter !== "all" && l.crop !== cropFilter) return false;
+    if (regionFilter !== "all" && (l.region ?? "") !== regionFilter) return false;
+    if (!inBand(Number(l.asking_price_per_kg))) return false;
+    return true;
   });
+
+  const hasActiveFilter = cropFilter !== "all" || regionFilter !== "all" || priceBand !== "all" || q.length > 0;
+  const clearFilters = () => { setCropFilter("all"); setRegionFilter("all"); setPriceBand("all"); setQ(""); };
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
@@ -107,6 +138,43 @@ function Marketplace() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input className="pl-9" placeholder="Search crop or region..." value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
+      </div>
+
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mr-1">
+          <Filter className="h-3.5 w-3.5" /> Filters
+        </div>
+        <Select value={cropFilter} onValueChange={setCropFilter}>
+          <SelectTrigger className="h-9 w-[160px]"><SelectValue placeholder="Crop" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All crops</SelectItem>
+            {cropOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={regionFilter} onValueChange={setRegionFilter}>
+          <SelectTrigger className="h-9 w-[200px]"><SelectValue placeholder="Region" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All regions</SelectItem>
+            {regionOptions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={priceBand} onValueChange={setPriceBand}>
+          <SelectTrigger className="h-9 w-[170px]"><SelectValue placeholder="Price ₹/kg" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Any price</SelectItem>
+            <SelectItem value="under20">Under ₹20</SelectItem>
+            <SelectItem value="20to50">₹20 – ₹50</SelectItem>
+            <SelectItem value="50to100">₹50 – ₹100</SelectItem>
+            <SelectItem value="over100">Over ₹100</SelectItem>
+          </SelectContent>
+        </Select>
+        {hasActiveFilter && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9">
+            <X className="h-3.5 w-3.5 mr-1" /> Clear
+          </Button>
+        )}
+        <div className="ml-auto text-xs text-muted-foreground">{filtered.length} of {listings.length} listings</div>
       </div>
 
       {loading ? (

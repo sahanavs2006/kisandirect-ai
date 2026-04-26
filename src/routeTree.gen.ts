@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ScansRouteImport } from './routes/scans'
 import { Route as MartRouteImport } from './routes/mart'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as FarmerRouteImport } from './routes/farmer'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ScansRoute = ScansRouteImport.update({
+  id: '/scans',
+  path: '/scans',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MartRoute = MartRouteImport.update({
   id: '/mart',
   path: '/mart',
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/farmer': typeof FarmerRoute
   '/marketplace': typeof MarketplaceRoute
   '/mart': typeof MartRoute
+  '/scans': typeof ScansRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/farmer': typeof FarmerRoute
   '/marketplace': typeof MarketplaceRoute
   '/mart': typeof MartRoute
+  '/scans': typeof ScansRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,21 @@ export interface FileRoutesById {
   '/farmer': typeof FarmerRoute
   '/marketplace': typeof MarketplaceRoute
   '/mart': typeof MartRoute
+  '/scans': typeof ScansRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/farmer' | '/marketplace' | '/mart'
+  fullPaths: '/' | '/auth' | '/farmer' | '/marketplace' | '/mart' | '/scans'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/farmer' | '/marketplace' | '/mart'
-  id: '__root__' | '/' | '/auth' | '/farmer' | '/marketplace' | '/mart'
+  to: '/' | '/auth' | '/farmer' | '/marketplace' | '/mart' | '/scans'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/farmer'
+    | '/marketplace'
+    | '/mart'
+    | '/scans'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,10 +93,18 @@ export interface RootRouteChildren {
   FarmerRoute: typeof FarmerRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MartRoute: typeof MartRoute
+  ScansRoute: typeof ScansRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/scans': {
+      id: '/scans'
+      path: '/scans'
+      fullPath: '/scans'
+      preLoaderRoute: typeof ScansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mart': {
       id: '/mart'
       path: '/mart'
@@ -125,6 +149,7 @@ const rootRouteChildren: RootRouteChildren = {
   FarmerRoute: FarmerRoute,
   MarketplaceRoute: MarketplaceRoute,
   MartRoute: MartRoute,
+  ScansRoute: ScansRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
