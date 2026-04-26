@@ -6,9 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Trophy, Package, IndianRupee, MapPin, ScanSearch, Trash2 } from "lucide-react";
+import { Loader2, Sparkles, Trophy, Package, IndianRupee, MapPin, ScanSearch, Trash2, ShoppingCart } from "lucide-react";
 import { auditQuality } from "@/server/ai.functions";
-import { useDemoMode, DEMO_LISTINGS, DEMO_FARMERS, DEMO_AUDIT } from "@/lib/demo";
 
 export const Route = createFileRoute("/mart")({
   component: MartDashboard,
@@ -23,7 +22,6 @@ type Listing = {
 function MartDashboard() {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
-  const { demo } = useDemoMode();
   const [listings, setListings] = useState<Listing[]>([]);
   const [farmers, setFarmers] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<string[]>([]);
@@ -31,17 +29,11 @@ function MartDashboard() {
   const [audit, setAudit] = useState<any | null>(null);
 
   useEffect(() => {
-    if (demo) return;
     if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
     if (!loading && user && role && role !== "mart") navigate({ to: "/farmer" });
-  }, [user, role, loading, navigate, demo]);
+  }, [user, role, loading, navigate]);
 
   const load = async () => {
-    if (demo) {
-      setListings(DEMO_LISTINGS as Listing[]);
-      setFarmers(DEMO_FARMERS);
-      return;
-    }
     const { data } = await supabase.from("listings").select("*").eq("status", "available").order("created_at", { ascending: false });
     setListings((data ?? []) as Listing[]);
     const ids = Array.from(new Set((data ?? []).map((l) => l.farmer_id)));
@@ -53,9 +45,9 @@ function MartDashboard() {
     }
   };
 
-  useEffect(() => { if (user || demo) load(); }, [user, demo]);
+  useEffect(() => { if (user) load(); }, [user]);
 
-  if (!demo && (loading || !user)) return <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div>;
+  if (loading || !user) return <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div>;
 
   const toggleSelect = (id: string) => {
     setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : s.length >= 6 ? s : [...s, id]);
@@ -70,32 +62,6 @@ function MartDashboard() {
     setAuditing(true);
     setAudit(null);
     try {
-      if (demo) {
-        await new Promise((r) => setTimeout(r, 1100));
-        // Build a demo audit ranking from current selection
-        const ranking = selectedListings.map((l, i) => ({
-          listing_id: l.id,
-          rank: i + 1,
-          grade: i === 0 ? "A" : i === 1 ? "B" : "C",
-          score: i === 0 ? 92 : i === 1 ? 78 : 64,
-          fair_price_per_kg: Math.max(1, Math.round(Number(l.asking_price_per_kg) * (i === 0 ? 1.05 : 0.92))),
-          shelf_life_days: i === 0 ? 8 : i === 1 ? 5 : 3,
-          reasons:
-            i === 0
-              ? ["Uniform colour, minimal blemishes", "Firm with intact stems", "Asking price below fair value"]
-              : ["Mixed ripeness", "Some surface bruising"],
-          defects: i === 0 ? [] : ["minor bruising", "uneven ripening"],
-        }));
-        setAudit({
-          ranking,
-          recommendation:
-            DEMO_AUDIT.recommendation +
-            " (Demo result — sign up to run live AI audits on real lots.)",
-          best_value_listing_id: ranking[0].listing_id,
-        });
-        toast.success("Demo audit complete.");
-        return;
-      }
       const submissions = selectedListings.map((l) => ({
         listingId: l.id,
         farmerName: farmers[l.farmer_id] ?? "Farmer",
@@ -130,13 +96,16 @@ function MartDashboard() {
     }
   };
 
-  const buy = async (id: string) => {
-    if (demo) {
-      toast.success("Demo purchase confirmed!");
-      setListings((ls) => ls.filter((l) => l.id !== id));
-      setSelected((s) => s.filter((x) => x !== id));
-      return;
-    }
+  const addToCart = async (id: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("cart_items")
+      .upsert({ user_id: user.id, listing_id: id, quantity_kg: 1 }, { onConflict: "user_id,listing_id" });
+    if (error) toast.error(error.message);
+    else toast.success("Added to cart");
+  };
+
+  const buyNow = async (id: string) => {
     const { error } = await supabase
       .from("listings")
       .update({ status: "sold", buyer_id: user!.id, sold_at: new Date().toISOString() })
@@ -152,7 +121,6 @@ function MartDashboard() {
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Mart Procurement</h1>
           <p className="text-muted-foreground mt-1">
             Compare farmer submissions side-by-side. Let AI rank them.
-            {demo && <span className="ml-2 inline-flex items-center gap-1 text-xs font-semibold text-primary"><Sparkles className="h-3 w-3" />Demo mode</span>}
           </p>
         </div>
         <Link to="/marketplace"><Button variant="outline" size="sm">Browse all</Button></Link>
@@ -187,7 +155,7 @@ function MartDashboard() {
             </div>
           </Card>
 
-          {audit && <AuditResultPanel audit={audit} listings={listings} farmers={farmers} onBuy={buy} />}
+          {audit && <AuditResultPanel audit={audit} listings={listings} farmers={farmers} onBuy={buyNow} />}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {listings.map((l) => {
@@ -212,7 +180,9 @@ function MartDashboard() {
                     </div>
                     <div className="flex items-end justify-between pt-2 border-t border-border/60">
                       <div className="flex items-center text-xl font-bold text-primary"><IndianRupee className="h-4 w-4" />{l.asking_price_per_kg}<span className="text-xs font-normal text-muted-foreground ml-1">/kg</span></div>
-                      <Button size="sm" onClick={(e) => { e.stopPropagation(); buy(l.id); }} className="bg-[image:var(--gradient-hero)] hover:opacity-90">Buy</Button>
+                      <Button size="sm" onClick={(e) => { e.stopPropagation(); addToCart(l.id); }} className="bg-[image:var(--gradient-hero)] hover:opacity-90">
+                        <ShoppingCart className="h-4 w-4 mr-1" />Add
+                      </Button>
                     </div>
                   </div>
                 </Card>
