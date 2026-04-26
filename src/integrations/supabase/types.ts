@@ -44,6 +44,30 @@ export type Database = {
         }
         Relationships: []
       }
+      cart_items: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          quantity_kg: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          quantity_kg?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          quantity_kg?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       listings: {
         Row: {
           ai_quality_grade: string | null
@@ -101,6 +125,27 @@ export type Database = {
           sold_price_per_kg?: number | null
           status?: string
           variety?: string | null
+        }
+        Relationships: []
+      }
+      login_history: {
+        Row: {
+          created_at: string
+          id: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
