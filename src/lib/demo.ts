@@ -15,9 +15,14 @@ export function setDemoEnabled(on: boolean) {
 }
 
 export function useDemoMode() {
+  // Always start as `false` on the client's first render so it matches the
+  // SSR output and avoids React hydration mismatches. The real value is read
+  // from localStorage in an effect (after hydration) and then kept in sync.
   const [demo, setDemo] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     setDemo(isDemoEnabled());
+    setHydrated(true);
     const onChange = () => setDemo(isDemoEnabled());
     window.addEventListener("kisandirect:demo-changed", onChange);
     window.addEventListener("storage", onChange);
@@ -28,11 +33,17 @@ export function useDemoMode() {
   }, []);
   return {
     demo,
+    hydrated,
     enable: () => setDemoEnabled(true),
     disable: () => setDemoEnabled(false),
+    reset: () => setDemoEnabled(false),
     toggle: () => setDemoEnabled(!isDemoEnabled()),
   };
 }
+
+/* Sample diseased leaf used by the demo "Load sample image" action */
+export const DEMO_SAMPLE_LEAF_URL =
+  "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1024&q=70";
 
 /* ──────────────────── SAMPLE DATA ──────────────────── */
 
