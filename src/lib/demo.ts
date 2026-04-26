@@ -41,9 +41,6 @@ export function useDemoMode() {
   };
 }
 
-/* Sample diseased leaf used by the demo "Load sample image" action */
-export const DEMO_SAMPLE_LEAF_URL =
-  "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1024&q=70";
 
 /* ──────────────────── SAMPLE DATA ──────────────────── */
 
