@@ -2,11 +2,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { useDemoMode, DEMO_SCANS } from "@/lib/demo";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { History, Leaf, AlertTriangle, Sparkles, ArrowLeft, ScanLine } from "lucide-react";
+import { History, Leaf, AlertTriangle, ArrowLeft, ScanLine } from "lucide-react";
 
 export const Route = createFileRoute("/scans")({
   head: () => ({
@@ -28,25 +27,18 @@ type Scan = {
 
 function ScansPage() {
   const { user, role, loading } = useAuth();
-  const { demo } = useDemoMode();
   const navigate = useNavigate();
   const [scans, setScans] = useState<Scan[]>([]);
   const [busy, setBusy] = useState(true);
 
   useEffect(() => {
-    if (demo) return;
     if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
     if (!loading && user && role && role !== "farmer") navigate({ to: "/mart" });
-  }, [user, role, loading, navigate, demo]);
+  }, [user, role, loading, navigate]);
 
   useEffect(() => {
     (async () => {
       setBusy(true);
-      if (demo) {
-        setScans(DEMO_SCANS as Scan[]);
-        setBusy(false);
-        return;
-      }
       if (!user) return;
       const { data } = await supabase
         .from("scans")
@@ -56,9 +48,9 @@ function ScansPage() {
       setScans((data ?? []) as Scan[]);
       setBusy(false);
     })();
-  }, [user, demo]);
+  }, [user]);
 
-  if (!demo && (loading || !user)) {
+  if (loading || !user) {
     return <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div>;
   }
 
@@ -74,7 +66,6 @@ function ScansPage() {
           </h1>
           <p className="text-muted-foreground mt-1">
             Every diagnosis the AI has ever made for you, with timestamps and remedies.
-            {demo && <span className="ml-2 inline-flex items-center gap-1 text-xs font-semibold text-primary"><Sparkles className="h-3 w-3" />Demo data</span>}
           </p>
         </div>
         <Link to="/farmer">

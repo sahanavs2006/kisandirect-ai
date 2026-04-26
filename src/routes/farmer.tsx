@@ -10,11 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { TrendingUp, TrendingDown, Minus, Upload, Sparkles, Leaf, IndianRupee, ArrowUp, ArrowDown, AlertTriangle, ScanLine, Loader2, ImagePlus, History } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Upload, Leaf, IndianRupee, ArrowUp, ArrowDown, AlertTriangle, ScanLine, Loader2, History } from "lucide-react";
 import { predictPrice, scanDisease } from "@/server/ai.functions";
-import { useDemoMode, DEMO_FORECAST, DEMO_DIAGNOSIS, DEMO_FARMER_LISTINGS, DEMO_SCANS } from "@/lib/demo";
 import { Link } from "@tanstack/react-router";
-import sampleLeafUrl from "@/assets/sample-diseased-leaf.jpg";
 
 export const Route = createFileRoute("/farmer")({
   component: FarmerDashboard,
@@ -23,15 +21,13 @@ export const Route = createFileRoute("/farmer")({
 function FarmerDashboard() {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
-  const { demo } = useDemoMode();
 
   useEffect(() => {
-    if (demo) return;
     if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
     if (!loading && user && role && role !== "farmer") navigate({ to: "/mart" });
-  }, [user, role, loading, navigate, demo]);
+  }, [user, role, loading, navigate]);
 
-  if (!demo && (loading || !user)) {
+  if (loading || !user) {
     return <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div>;
   }
 
@@ -41,7 +37,6 @@ function FarmerDashboard() {
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Farmer Dashboard</h1>
         <p className="text-muted-foreground mt-1">
           Predict prices, scan crops, sell directly.
-          {demo && <span className="ml-2 inline-flex items-center gap-1 text-xs font-semibold text-primary"><Sparkles className="h-3 w-3" />Demo mode</span>}
         </p>
       </div>
 
@@ -64,24 +59,18 @@ function FarmerDashboard() {
 /* ─────────── PRICE PREDICTION ─────────── */
 function PricePredictorTab() {
   const { user } = useAuth();
-  const { demo } = useDemoMode();
   const [crop, setCrop] = useState("Onion");
   const [region, setRegion] = useState("Nashik, Maharashtra");
   const [price, setPrice] = useState(28);
   const [qty, setQty] = useState(500);
   const [weather, setWeather] = useState("Heavy rain expected this week");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(demo ? DEMO_FORECAST : null);
+  const [result, setResult] = useState<any>(null);
 
   const run = async () => {
     setLoading(true);
     setResult(null);
     try {
-      if (demo) {
-        await new Promise((r) => setTimeout(r, 700));
-        setResult(DEMO_FORECAST);
-        return;
-      }
       const r = await predictPrice({
         data: { crop, region, currentPricePerKg: Number(price), weather, quantityKg: Number(qty) },
       });
@@ -133,7 +122,7 @@ function PricePredictorTab() {
             <Textarea rows={2} value={weather} onChange={(e) => setWeather(e.target.value)} />
           </div>
           <Button onClick={run} disabled={loading} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
-            {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />AI is reasoning...</> : <><Sparkles className="h-4 w-4 mr-2" />Forecast prices</>}
+            {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />AI is reasoning...</> : <><TrendingUp className="h-4 w-4 mr-2" />Forecast prices</>}
           </Button>
         </div>
       </Card>
@@ -241,7 +230,6 @@ function PriceCell({ label, value, compare }: { label: string; value: number; co
 /* ─────────── CREATE LISTING ─────────── */
 function CreateListingTab() {
   const { user } = useAuth();
-  const { demo } = useDemoMode();
   const [crop, setCrop] = useState("Tomato");
   const [variety, setVariety] = useState("");
   const [qty, setQty] = useState(100);
@@ -251,10 +239,6 @@ function CreateListingTab() {
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {
-    if (demo) {
-      toast.success("Demo: listing would be published. Sign up to go live.");
-      return;
-    }
     if (!user) return;
     if (files.length === 0) { toast.error("Add at least 1 photo"); return; }
     setSubmitting(true);
@@ -323,31 +307,14 @@ function CreateListingTab() {
 /* ─────────── DISEASE SCAN ─────────── */
 function DiseaseScanTab() {
   const { user } = useAuth();
-  const { demo } = useDemoMode();
   const [file, setFile] = useState<File | null>(null);
   const [cropHint, setCropHint] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(demo ? DEMO_DIAGNOSIS : null);
+  const [result, setResult] = useState<any>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const loadSample = () => {
-    setFile(null);
-    setPreviewUrl(sampleLeafUrl);
-    setCropHint("Tomato");
-    setResult(null);
-    toast.success("Sample tomato leaf loaded — click Diagnose to see the AI verdict.");
-  };
-
   const run = async () => {
-    if (demo) {
-      setLoading(true);
-      setResult(null);
-      await new Promise((r) => setTimeout(r, 700));
-      setResult(DEMO_DIAGNOSIS);
-      setLoading(false);
-      return;
-    }
     if (!file || !user) { toast.error("Upload a photo first"); return; }
     setLoading(true);
     setResult(null);
@@ -381,17 +348,11 @@ function DiseaseScanTab() {
           <div className="space-y-2">
             <Label>Photo</Label>
             <Input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0] ?? null; setFile(f); setPreviewUrl(f ? URL.createObjectURL(f) : null); }} />
-            {demo && (
-              <Button type="button" variant="outline" size="sm" onClick={loadSample} className="w-full">
-                <ImagePlus className="h-4 w-4 mr-2" /> Load sample crop image
-              </Button>
-            )}
           </div>
           {previewUrl && <div className="aspect-video rounded-lg overflow-hidden border border-border/60"><img src={previewUrl} alt="Crop preview" className="h-full w-full object-cover" /></div>}
-          <Button onClick={run} disabled={loading || (!file && !previewUrl && !demo)} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
+          <Button onClick={run} disabled={loading || !file} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
             {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Diagnosing...</> : <><ScanLine className="h-4 w-4 mr-2" />Diagnose with AI</>}
           </Button>
-          {demo && !file && !previewUrl && <p className="text-xs text-muted-foreground">Demo mode: load a sample image or click diagnose to see a sample result.</p>}
           <div className="pt-2 border-t border-border/60">
             <Link to="/scans" className="inline-flex items-center text-xs text-primary hover:underline font-semibold">
               <History className="h-3.5 w-3.5 mr-1" /> View full scan history
@@ -445,16 +406,10 @@ function DiagnosisCard({ r }: { r: any }) {
 /* ─────────── HISTORY ─────────── */
 function HistoryTab() {
   const { user } = useAuth();
-  const { demo } = useDemoMode();
   const [listings, setListings] = useState<any[]>([]);
   const [scans, setScans] = useState<any[]>([]);
 
   useEffect(() => {
-    if (demo) {
-      setListings(DEMO_FARMER_LISTINGS);
-      setScans(DEMO_SCANS);
-      return;
-    }
     if (!user) return;
     (async () => {
       const { data: l } = await supabase.from("listings").select("*").eq("farmer_id", user.id).order("created_at", { ascending: false });
@@ -462,7 +417,7 @@ function HistoryTab() {
       const { data: s } = await supabase.from("scans").select("*").eq("farmer_id", user.id).order("created_at", { ascending: false }).limit(10);
       setScans(s ?? []);
     })();
-  }, [user, demo]);
+  }, [user]);
 
   return (
     <div className="grid lg:grid-cols-2 gap-6">

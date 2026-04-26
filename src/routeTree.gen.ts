@@ -13,7 +13,9 @@ import { Route as ScansRouteImport } from './routes/scans'
 import { Route as MartRouteImport } from './routes/mart'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as FarmerRouteImport } from './routes/farmer'
+import { Route as CartRouteImport } from './routes/cart'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 
 const ScansRoute = ScansRouteImport.update({
@@ -36,9 +38,19 @@ const FarmerRoute = FarmerRouteImport.update({
   path: '/farmer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -49,7 +61,9 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
+  '/cart': typeof CartRoute
   '/farmer': typeof FarmerRoute
   '/marketplace': typeof MarketplaceRoute
   '/mart': typeof MartRoute
@@ -57,7 +71,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
+  '/cart': typeof CartRoute
   '/farmer': typeof FarmerRoute
   '/marketplace': typeof MarketplaceRoute
   '/mart': typeof MartRoute
@@ -66,7 +82,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
+  '/cart': typeof CartRoute
   '/farmer': typeof FarmerRoute
   '/marketplace': typeof MarketplaceRoute
   '/mart': typeof MartRoute
@@ -74,13 +92,31 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/farmer' | '/marketplace' | '/mart' | '/scans'
+  fullPaths:
+    | '/'
+    | '/account'
+    | '/auth'
+    | '/cart'
+    | '/farmer'
+    | '/marketplace'
+    | '/mart'
+    | '/scans'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/farmer' | '/marketplace' | '/mart' | '/scans'
+  to:
+    | '/'
+    | '/account'
+    | '/auth'
+    | '/cart'
+    | '/farmer'
+    | '/marketplace'
+    | '/mart'
+    | '/scans'
   id:
     | '__root__'
     | '/'
+    | '/account'
     | '/auth'
+    | '/cart'
     | '/farmer'
     | '/marketplace'
     | '/mart'
@@ -89,7 +125,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRoute
   AuthRoute: typeof AuthRoute
+  CartRoute: typeof CartRoute
   FarmerRoute: typeof FarmerRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MartRoute: typeof MartRoute
@@ -126,11 +164,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FarmerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -145,7 +197,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRoute,
   AuthRoute: AuthRoute,
+  CartRoute: CartRoute,
   FarmerRoute: FarmerRoute,
   MarketplaceRoute: MarketplaceRoute,
   MartRoute: MartRoute,

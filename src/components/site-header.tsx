@@ -1,30 +1,12 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { LogOut, Sparkles, RotateCcw } from "lucide-react";
-import { useDemoMode } from "@/lib/demo";
-import { toast } from "sonner";
+import { LogOut, ShoppingCart, History as HistoryIcon } from "lucide-react";
 import logoUrl from "@/assets/krishimithra-logo.png";
 
 export function SiteHeader() {
   const { user, role, signOut } = useAuth();
   const navigate = useNavigate();
-  const { demo, toggle, reset } = useDemoMode();
-
-  const onToggleDemo = () => {
-    toggle();
-    toast.success(
-      !demo
-        ? "Demo mode ON — sample crops, scans & forecasts loaded."
-        : "Demo mode OFF."
-    );
-  };
-
-  const onResetDemo = () => {
-    reset();
-    toast.success("Demo cleared. Restored to live login flow.");
-    navigate({ to: "/" });
-  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
@@ -41,38 +23,28 @@ export function SiteHeader() {
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
           <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors">Marketplace</Link>
-          {((user && role === "farmer") || demo) && (
+          {user && role === "farmer" && (
             <Link to="/farmer" className="text-muted-foreground hover:text-foreground transition-colors">Farmer Dashboard</Link>
           )}
-          {((user && role === "mart") || demo) && (
-            <Link to="/mart" className="text-muted-foreground hover:text-foreground transition-colors">Mart Dashboard</Link>
+          {user && role === "mart" && (
+            <>
+              <Link to="/mart" className="text-muted-foreground hover:text-foreground transition-colors">Mart Dashboard</Link>
+              <Link to="/cart" className="text-muted-foreground hover:text-foreground transition-colors">Cart</Link>
+            </>
           )}
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant={demo ? "default" : "outline"}
-            size="sm"
-            onClick={onToggleDemo}
-            className={demo ? "bg-[image:var(--gradient-hero)] hover:opacity-90" : ""}
-            title="Preview the app with sample data, no signup required"
-          >
-            <Sparkles className="h-3.5 w-3.5 mr-1" />
-            {demo ? "Demo: ON" : "Try demo"}
-          </Button>
-          {demo && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onResetDemo}
-              title="Clear demo data and return to the live login flow"
-            >
-              <RotateCcw className="h-3.5 w-3.5 mr-1" />
-              Reset demo
-            </Button>
-          )}
           {user ? (
             <>
+              {role === "mart" && (
+                <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/cart" })} title="Your cart">
+                  <ShoppingCart className="h-4 w-4" />
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/account" })} title="Login history">
+                <HistoryIcon className="h-4 w-4" />
+              </Button>
               <span className="hidden sm:inline text-xs text-muted-foreground">
                 {role && <span className="capitalize px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground font-semibold">{role}</span>}
               </span>
