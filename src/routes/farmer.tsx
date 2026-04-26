@@ -10,11 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { TrendingUp, TrendingDown, Minus, Upload, Sparkles, Leaf, IndianRupee, ArrowUp, ArrowDown, AlertTriangle, ScanLine, Loader2, ImagePlus, History } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Upload, Leaf, IndianRupee, ArrowUp, ArrowDown, AlertTriangle, ScanLine, Loader2, History } from "lucide-react";
 import { predictPrice, scanDisease } from "@/server/ai.functions";
-import { useDemoMode, DEMO_FORECAST, DEMO_DIAGNOSIS, DEMO_FARMER_LISTINGS, DEMO_SCANS } from "@/lib/demo";
 import { Link } from "@tanstack/react-router";
-import sampleLeafUrl from "@/assets/sample-diseased-leaf.jpg";
 
 export const Route = createFileRoute("/farmer")({
   component: FarmerDashboard,
@@ -23,15 +21,13 @@ export const Route = createFileRoute("/farmer")({
 function FarmerDashboard() {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
-  const { demo } = useDemoMode();
 
   useEffect(() => {
-    if (demo) return;
     if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
     if (!loading && user && role && role !== "farmer") navigate({ to: "/mart" });
-  }, [user, role, loading, navigate, demo]);
+  }, [user, role, loading, navigate]);
 
-  if (!demo && (loading || !user)) {
+  if (loading || !user) {
     return <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div>;
   }
 
@@ -41,7 +37,6 @@ function FarmerDashboard() {
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Farmer Dashboard</h1>
         <p className="text-muted-foreground mt-1">
           Predict prices, scan crops, sell directly.
-          {demo && <span className="ml-2 inline-flex items-center gap-1 text-xs font-semibold text-primary"><Sparkles className="h-3 w-3" />Demo mode</span>}
         </p>
       </div>
 
@@ -64,24 +59,18 @@ function FarmerDashboard() {
 /* ─────────── PRICE PREDICTION ─────────── */
 function PricePredictorTab() {
   const { user } = useAuth();
-  const { demo } = useDemoMode();
   const [crop, setCrop] = useState("Onion");
   const [region, setRegion] = useState("Nashik, Maharashtra");
   const [price, setPrice] = useState(28);
   const [qty, setQty] = useState(500);
   const [weather, setWeather] = useState("Heavy rain expected this week");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(demo ? DEMO_FORECAST : null);
+  const [result, setResult] = useState<any>(null);
 
   const run = async () => {
     setLoading(true);
     setResult(null);
     try {
-      if (demo) {
-        await new Promise((r) => setTimeout(r, 700));
-        setResult(DEMO_FORECAST);
-        return;
-      }
       const r = await predictPrice({
         data: { crop, region, currentPricePerKg: Number(price), weather, quantityKg: Number(qty) },
       });
