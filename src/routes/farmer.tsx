@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { TrendingUp, TrendingDown, Minus, Upload, Sparkles, Leaf, IndianRupee, ArrowUp, ArrowDown, AlertTriangle, ScanLine, Loader2 } from "lucide-react";
 import { predictPrice, scanDisease } from "@/server/ai.functions";
+import { useDemoMode, DEMO_FORECAST, DEMO_DIAGNOSIS, DEMO_FARMER_LISTINGS, DEMO_SCANS } from "@/lib/demo";
 
 export const Route = createFileRoute("/farmer")({
   component: FarmerDashboard,
@@ -20,13 +21,15 @@ export const Route = createFileRoute("/farmer")({
 function FarmerDashboard() {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
+  const { demo } = useDemoMode();
 
   useEffect(() => {
+    if (demo) return;
     if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
     if (!loading && user && role && role !== "farmer") navigate({ to: "/mart" });
-  }, [user, role, loading, navigate]);
+  }, [user, role, loading, navigate, demo]);
 
-  if (loading || !user) {
+  if (!demo && (loading || !user)) {
     return <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading...</div>;
   }
 
@@ -34,7 +37,10 @@ function FarmerDashboard() {
     <div className="container mx-auto px-4 py-8 md:py-12">
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Farmer Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Predict prices, scan crops, sell directly.</p>
+        <p className="text-muted-foreground mt-1">
+          Predict prices, scan crops, sell directly.
+          {demo && <span className="ml-2 inline-flex items-center gap-1 text-xs font-semibold text-primary"><Sparkles className="h-3 w-3" />Demo mode</span>}
+        </p>
       </div>
 
       <Tabs defaultValue="predict" className="w-full">
@@ -56,18 +62,24 @@ function FarmerDashboard() {
 /* ─────────── PRICE PREDICTION ─────────── */
 function PricePredictorTab() {
   const { user } = useAuth();
+  const { demo } = useDemoMode();
   const [crop, setCrop] = useState("Onion");
   const [region, setRegion] = useState("Nashik, Maharashtra");
   const [price, setPrice] = useState(28);
   const [qty, setQty] = useState(500);
   const [weather, setWeather] = useState("Heavy rain expected this week");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<any>(demo ? DEMO_FORECAST : null);
 
   const run = async () => {
     setLoading(true);
     setResult(null);
     try {
+      if (demo) {
+        await new Promise((r) => setTimeout(r, 700));
+        setResult(DEMO_FORECAST);
+        return;
+      }
       const r = await predictPrice({
         data: { crop, region, currentPricePerKg: Number(price), weather, quantityKg: Number(qty) },
       });
@@ -227,6 +239,7 @@ function PriceCell({ label, value, compare }: { label: string; value: number; co
 /* ─────────── CREATE LISTING ─────────── */
 function CreateListingTab() {
   const { user } = useAuth();
+  const { demo } = useDemoMode();
   const [crop, setCrop] = useState("Tomato");
   const [variety, setVariety] = useState("");
   const [qty, setQty] = useState(100);
@@ -236,6 +249,10 @@ function CreateListingTab() {
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {
+    if (demo) {
+      toast.success("Demo: listing would be published. Sign up to go live.");
+      return;
+    }
     if (!user) return;
     if (files.length === 0) { toast.error("Add at least 1 photo"); return; }
     setSubmitting(true);
@@ -304,13 +321,22 @@ function CreateListingTab() {
 /* ─────────── DISEASE SCAN ─────────── */
 function DiseaseScanTab() {
   const { user } = useAuth();
+  const { demo } = useDemoMode();
   const [file, setFile] = useState<File | null>(null);
   const [cropHint, setCropHint] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<any>(demo ? DEMO_DIAGNOSIS : null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const run = async () => {
+    if (demo) {
+      setLoading(true);
+      setResult(null);
+      await new Promise((r) => setTimeout(r, 700));
+      setResult(DEMO_DIAGNOSIS);
+      setLoading(false);
+      return;
+    }
     if (!file || !user) { toast.error("Upload a photo first"); return; }
     setLoading(true);
     setResult(null);
@@ -343,9 +369,10 @@ function DiseaseScanTab() {
           <div className="space-y-2"><Label>Crop hint (optional)</Label><Input value={cropHint} onChange={(e) => setCropHint(e.target.value)} placeholder="e.g. Potato, Tomato" /></div>
           <div className="space-y-2"><Label>Photo</Label><Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
           {file && <div className="aspect-video rounded-lg overflow-hidden border border-border/60"><img src={URL.createObjectURL(file)} alt="" className="h-full w-full object-cover" /></div>}
-          <Button onClick={run} disabled={loading || !file} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
+          <Button onClick={run} disabled={loading || (!file && !demo)} className="w-full bg-[image:var(--gradient-hero)] hover:opacity-90">
             {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Diagnosing...</> : <><ScanLine className="h-4 w-4 mr-2" />Diagnose with AI</>}
           </Button>
+          {demo && !file && <p className="text-xs text-muted-foreground">Demo mode: click diagnose to see a sample result.</p>}
         </div>
       </Card>
 
@@ -394,10 +421,16 @@ function DiagnosisCard({ r }: { r: any }) {
 /* ─────────── HISTORY ─────────── */
 function HistoryTab() {
   const { user } = useAuth();
+  const { demo } = useDemoMode();
   const [listings, setListings] = useState<any[]>([]);
   const [scans, setScans] = useState<any[]>([]);
 
   useEffect(() => {
+    if (demo) {
+      setListings(DEMO_FARMER_LISTINGS);
+      setScans(DEMO_SCANS);
+      return;
+    }
     if (!user) return;
     (async () => {
       const { data: l } = await supabase.from("listings").select("*").eq("farmer_id", user.id).order("created_at", { ascending: false });
@@ -405,7 +438,7 @@ function HistoryTab() {
       const { data: s } = await supabase.from("scans").select("*").eq("farmer_id", user.id).order("created_at", { ascending: false }).limit(10);
       setScans(s ?? []);
     })();
-  }, [user]);
+  }, [user, demo]);
 
   return (
     <div className="grid lg:grid-cols-2 gap-6">
